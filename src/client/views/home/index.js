@@ -30,6 +30,18 @@ class Home extends React.Component {
             this.state.data = data;
             console.debug({data});
         })
+        this.parser.on('OSD'.toLowerCase(), (data) => {
+            this.state.data = data;
+            console.debug({data});
+        })
+        this.parser.on('HOME'.toLowerCase(), (data) => {
+            this.state.data = data;
+            console.debug({data});
+        })
+        this.parser.on('GIMABL'.toLowerCase(), (data) => {
+            this.state.data = data;
+            console.debug({data});
+        })
         this.parser.on('warn', (msg, warnInfo) => {
             console.warn(msg, warnInfo);
         })
