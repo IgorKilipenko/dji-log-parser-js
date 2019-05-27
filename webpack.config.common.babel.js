@@ -67,6 +67,14 @@ const baseConfig = {
                     name: '[name].[ext]',
                     outputPath: __dirname + 'fonts/'
                 }
+            },
+            {
+                test: /\.(txt|dat)$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                    }
+                ]
             }
         ]
     },
