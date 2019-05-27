@@ -1,8 +1,11 @@
 import Record from './record';
+import RECORD_TYPES from './recordTypes';
 
 class Gimbal extends Record {
     static TYPE_VALUE = 0x03;
-    static TYPE_NAME = 'GIMBAL';
+    static get TYPE_NAME() {
+        return RECORD_TYPES[Gimbal.TYPE_VALUE]
+    }
 
     static get minLength() {
         return 12;
