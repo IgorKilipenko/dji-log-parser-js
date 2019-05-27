@@ -277,8 +277,8 @@ class Osd extends Record {
     static TYPE_VALUE = 0x01;
     static TYPE_NAME = 'OSD';
 
-    constructor(dataView) {
-        super(dataView);
+    constructor(dataView, lineNum) {
+        super(dataView, lineNum);
         this._initValues();
     }
 

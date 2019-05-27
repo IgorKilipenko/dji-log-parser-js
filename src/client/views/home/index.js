@@ -36,7 +36,9 @@ class Home extends React.Component {
         this.parser.on('error', (msg, errInfo)=> {
             console.error(msg, errInfo);
         })
-
+        this.parser.on('parseend', (stat) => {
+            console.debug('Parsing end success', stat);
+        })
 
         this.state = {};
     }

@@ -1,8 +1,8 @@
 import Record from './record';
 
 class Custom extends Record {
-    constructor(dataView) {
-        super(dataView);
+    constructor(dataView, lineNum) {
+        super(dataView, lineNum);
         this._initValues();
     }
 

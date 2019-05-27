@@ -28,17 +28,17 @@ DataView.prototype.getSubByte = function(byteOffset, mask) {
 };
 
 class Record {
-    constructor(dataView, id = null) {
+    constructor(dataView, lineNum = null) {
         this._dataView = dataView;
-        this._id = id;
+        this._lineNum = lineNum;
     }
 
     get dataView(){
         return this._dataView;
     }
 
-    get id(){
-        return this._id;
+    get lineNum(){
+        return this._lineNum;
     }
 }
 

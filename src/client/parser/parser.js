@@ -58,86 +58,112 @@ class Binary extends EventEmitter {
         return this._dataView;
     }
 
-    parse = async buffer => {
-        console.debug('Start parsing');
-
-        const statTable = {
-            fileInfo: {},
-            records: Object.keys(RECORD_TYPES).reduce((obj, val) => {
-                obj[val] = { count: 0 };
-                return obj;
-            }, {})
-        };
-
-        if (!buffer) {
-            this.emit('error', 'buffer is empty', { buffer });
-            return false;
-        } else if (typeof buffer === 'string') {
-            console.debug('Buffer is string');
-            try {
-                buffer = await Binary.loadFile(buffer);
-            } catch (err) {
-                console.error(err);
+    parse = buffer => {
+        return new Promise(async (reslove, reject) => {
+            console.debug('Start parsing');
+            if (!buffer) {
+                const err = {
+                    type: 'error',
+                    msg: 'Buffer is empty',
+                    info: { buffer }
+                };
+                this.emit('error', err);
+                reject(err);
+            } else if (typeof buffer === 'string') {
+                console.debug('Buffer is string');
+                try {
+                    buffer = await Binary.loadFile(buffer);
+                } catch (err) {
+                    this.emit('error', err);
+                    reject(err);
+                }
+            } else if (!(buffer instanceof ArrayBuffer)) {
+                const err = {
+                    type: 'error',
+                    msg: 'Input buffer error, buffer not instainseof ArrayBuffer and not url string',
+                    info: {
+                        buffer
+                    }
+                };
+                this.emit('error', err);
+                reject(err);
             }
-        }
 
-        console.debug({ bufferType: typeof buffer });
+            const buildTable = () => {
+                return {
+                    fileInfo: {},
+                    records: Object.keys(RECORD_TYPES).reduce((obj, val) => {
+                        obj[val] = { count: 0 };
+                        return obj;
+                    }, {})
+                };
+            };
 
-        const dataView = new DataView(buffer);
-        const detailsAddress = dataView.getUint64(0, true);
-        const versionNumber = dataView.getUint32(8, false);
-        const encryptedObs = dataView.getInt8(10, true);
+            const statTable = buildTable();
 
-        console.assert(detailsAddress, 'Details address not found', {
-            detailsAddress: detailsAddress
-        });
+            console.debug({ bufferType: typeof buffer });
 
-        let headerSize;
-        let encrypted;
+            const dataView = new DataView(buffer);
+            const detailsAddress = dataView.getUint64(0, true);
+            const versionNumber = dataView.getUint32(8, false);
+            const encryptedObs = dataView.getInt8(10, true);
 
-        if ((versionNumber & 0x0000ff00) < 0x00000600) {
-            headerSize = OLD_HEADER_SIZE;
-            encrypted = false;
-        } else {
-            headerSize = NEW_HEADER_SIZE;
-            encrypted = true;
-        }
+            //console.assert(detailsAddress, 'Details address not found', {
+            //    detailsAddress: detailsAddress
+            //});
 
-        statTable.fileInfo = {
-            ...statTable.fileInfo,
-            headerSize,
-            encrypted,
-            detailsAddress: detailsAddress,
-            versionNumber: versionNumber
-        };
+            let headerSize;
+            let encrypted;
 
-        console.debug('[FELE INFO]', { statTable });
-
-        const minFileSize = headerSize + MIN_RECORD_SIZE;
-        if (detailsAddress < minFileSize || detailsAddress > dataView.byteLength) {
-            this.emit('error', 'Bed file size', {
-                minFileSize,
-                detailsAddress: detailsAddress,
-                fileLength: dataView.byteLength
-            });
-            return false;
-        }
-
-        /* Parsing all of the records in the file */
-        let offset = headerSize;
-        const endRecordArea = detailsAddress;
-        while (offset < endRecordArea) {
-            let frameInfo = this._isRecordSet(offset, dataView, detailsAddress, encrypted);
-            if (frameInfo) {
-                offset = this.parseRecord(frameInfo, statTable);
+            if ((versionNumber & 0x0000ff00) < 0x00000600) {
+                headerSize = OLD_HEADER_SIZE;
+                encrypted = false;
             } else {
-                offset++;
+                headerSize = NEW_HEADER_SIZE;
+                encrypted = true;
             }
-        }
 
-        console.debug({ statTable });
-        this.emit('parseend', statTable);
-        return offset;
+            statTable.fileInfo = {
+                ...statTable.fileInfo,
+                headerSize,
+                encrypted,
+                detailsAddress: detailsAddress,
+                versionNumber: versionNumber
+            };
+
+            console.debug('[FELE INFO]', { statTable });
+
+            const minFileSize = headerSize + MIN_RECORD_SIZE;
+            if (detailsAddress < minFileSize || detailsAddress > dataView.byteLength) {
+                const err = {
+                    type: 'error',
+                    msg: 'Bed file size',
+                    info: {
+                        minFileSize,
+                        detailsAddress: detailsAddress,
+                        fileLength: dataView.byteLength
+                    }
+                };
+                this.emit('error', err);
+                reject(err);
+            }
+
+            /* Parsing all of the records in the file */
+            let offset = headerSize;
+            const endRecordArea = detailsAddress;
+            while (offset < endRecordArea) {
+                let frameInfo = this._isRecordSet(offset, dataView, detailsAddress, encrypted);
+                if (frameInfo) {
+                    offset = this.parseRecord(frameInfo, statTable);
+                } else {
+                    offset++;
+                }
+            }
+
+            console.debug({ statTable });
+            this.emit('parseend', statTable);
+            reslove(statTable);
+        });
     };
 
     _isImage = (offset, dataView) => {
@@ -240,7 +266,7 @@ class Binary extends EventEmitter {
 
         let data = null;
         try {
-            data = this.createRecordAt(recTypeId, payloadView);
+            data = this.createRecordAt(recTypeId, payloadView, statTable);
         } catch (err) {
             console.error(`Parsing error [${RECORD_TYPES[recTypeId]}]`, {
                 err,
@@ -275,7 +301,7 @@ class Binary extends EventEmitter {
         return nextRecordAddress;
     };
 
-    createRecordAt = (recTypeId, payloadView) => {
+    createRecordAt = (recTypeId, payloadView, statTable) => {
         let data = null;
         const checkLength = minLen => {
             if (payloadView.byteLength >= minLen) {
@@ -283,18 +309,20 @@ class Binary extends EventEmitter {
             }
             return false;
         };
+        const count = statTable.records[recTypeId] ? statTable.records[recTypeId].count : 0;
+        
         switch (recTypeId) {
             case Osd.TYPE_VALUE:
                 if (!checkLength(Osd.minLength)) {
                     break;
                 }
-                data = new Osd(payloadView);
+                data = new Osd(payloadView, count+1);
                 break;
             case Custom.TYPE_VALUE:
                 if (!checkLength(Custom.minLength)) {
                     break;
                 }
-                data = new Custom(payloadView);
+                data = new Custom(payloadView, count+1);
                 break;
         }
         return data;
