@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import KEYS from './keys';
 import { RECORD_TYPES } from './records';
-import { Custom, Osd, Home } from './records';
+import { Custom, Osd, Home, Gimbal } from './records';
 
 const OLD_HEADER_SIZE = 12;
 const NEW_HEADER_SIZE = 100;
@@ -277,6 +277,12 @@ class Binary extends EventEmitter {
                     break;
                 }
                 data = new Home(payloadView, count + 1);
+                break;
+            case Gimbal.TYPE_VALUE:
+                if (!checkLength(Gimbal.minLength)) {
+                    break;
+                }
+                data = new Gimbal(payloadView, count + 1);
                 break;
             case Custom.TYPE_VALUE:
                 if (!checkLength(Custom.minLength)) {
