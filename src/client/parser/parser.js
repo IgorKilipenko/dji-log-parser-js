@@ -290,19 +290,19 @@ class Binary extends EventEmitter {
             return false;
         };
         const count = statTable.records[recTypeId] ? statTable.records[recTypeId].count : 0;
-        
+
         switch (recTypeId) {
             case Osd.TYPE_VALUE:
                 if (!checkLength(Osd.minLength)) {
                     break;
                 }
-                data = new Osd(payloadView, count+1);
+                data = new Osd(payloadView, count + 1);
                 break;
             case Custom.TYPE_VALUE:
                 if (!checkLength(Custom.minLength)) {
                     break;
                 }
-                data = new Custom(payloadView, count+1);
+                data = new Custom(payloadView, count + 1);
                 break;
         }
         return data;

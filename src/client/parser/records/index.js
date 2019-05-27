@@ -1,4 +1,7 @@
 import Custom from './custom';
 import Osd from './osd';
+import Home from './home';
 
-export {Custom, Osd}
+import FriendlyValueMap from './friendlyValueMap';
+
+export { Custom, Osd, Home, FriendlyValueMap };
