@@ -1,12 +1,11 @@
 import { EventEmitter } from 'events';
 import KEYS from './keys';
-import {RECORD_TYPES} from './records'
+import { RECORD_TYPES } from './records';
 import { Custom, Osd } from './records';
 
 const OLD_HEADER_SIZE = 12;
 const NEW_HEADER_SIZE = 100;
 const MIN_RECORD_SIZE = 3; // type+0-length+FF
-
 
 class Binary extends EventEmitter {
     constructor() {
