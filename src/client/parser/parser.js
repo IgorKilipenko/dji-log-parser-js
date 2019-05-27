@@ -36,26 +36,6 @@ const RECORD_TYPES = {
 class Binary extends EventEmitter {
     constructor() {
         super();
-        this._dataView = null;
-        this._detailsAddress = null;
-        this._versionNumber = null;
-        this._encrypted = null;
-    }
-
-    get detailsAddress() {
-        return this._detailsAddress;
-    }
-
-    get versionNumber() {
-        return this._versionNumber;
-    }
-
-    get encrypted() {
-        return this._encrypted;
-    }
-
-    get dataView() {
-        return this._dataView;
     }
 
     parse = buffer => {
