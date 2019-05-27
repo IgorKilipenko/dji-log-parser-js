@@ -38,7 +38,7 @@ class Home extends React.Component {
             this.state.data = data;
             console.debug({data});
         })
-        this.parser.on('GIMABL'.toLowerCase(), (data) => {
+        this.parser.on('GIMBAL'.toLowerCase(), (data) => {
             this.state.data = data;
             console.debug({data});
         })
