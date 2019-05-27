@@ -32,3 +32,5 @@ class Home extends Record {
         return this._height;
     }
 }
+
+export default Home;
