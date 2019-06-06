@@ -8,7 +8,7 @@ class Gimbal extends Record {
     }
 
     static get minLength() {
-        return 12;
+        return 12;  // previously, clarify later
     }
 
     constructor(dataView, lineNum) {
